@@ -273,7 +273,7 @@ if os.name != "posix" and "PYEDB_CI_NO_EXAMPLES" not in os.environ:
             # directory where function granular galleries are stored
             "backreferences_dir": None,
             # Modules for which function level galleries are created.  In
-            "doc_module": "ansys-legacy",
+            "doc_module": "ansys-pyedb",
             "image_scrapers": ("pyvista", "matplotlib"),
             "ignore_pattern": "flycheck*",
             "thumbnail_size": (350, 350),
@@ -306,7 +306,7 @@ html_theme = "ansys_sphinx_theme"
 html_logo = pyansys_logo_black
 html_context = {
     "github_user": "ansys",
-    "github_repo": "legacy",
+    "github_repo": "pyedb",
     "github_version": "main",
     "doc_path": "doc/source",
 }

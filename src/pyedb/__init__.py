@@ -10,7 +10,7 @@ __version__ = "0.2.dev0"
 
 version = __version__
 
-# By default we use pyedb legacy implementation
+# By default we use pyedb dotnet implementation
 if "PYEDB_USE_DOTNET" not in os.environ:
     os.environ["PYEDB_USE_DOTNET"] = "0"
 

@@ -857,7 +857,7 @@ class Edb(Database):
 
         Returns
         -------
-        Instance of :class: `legacy.edb_core.padstack.EdbPadstack`
+        Instance of :class: `pyedb.dotnet.edb_core.padstack.EdbPadstack`
 
         Examples
         --------
@@ -920,7 +920,7 @@ class Edb(Database):
 
         Returns
         -------
-        Instance of :class:`legacy.edb_core.hfss.EdbHfss`
+        Instance of :class:`pyedb.dotnet.edb_core.hfss.EdbHfss`
 
         Examples
         --------
@@ -941,7 +941,7 @@ class Edb(Database):
 
         See Also
         --------
-        :class:`legacy.edb_core.edb_data.simulation_configuration.SimulationConfiguration`
+        :class:`pyedb.dotnetedb_core.edb_data.simulation_configuration.SimulationConfiguration`
 
         Examples
         --------
@@ -982,7 +982,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.nets.EdbNets`
+        :class:`pyedb.dotnetedb_core.nets.EdbNets`
 
         Examples
         --------
@@ -1003,7 +1003,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.nets.EdbNetClasses`
+        :class:`pyedb.dotnetedb_core.nets.EdbNetClasses`
 
         Examples
         --------
@@ -1021,7 +1021,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.nets.EdbExtendedNets`
+        :class:`pyedb.dotnetedb_core.nets.EdbExtendedNets`
 
         Examples
         --------
@@ -1039,7 +1039,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.nets.EdbDifferentialPairs`
+        :class:`pyedb.dotnetedb_core.nets.EdbDifferentialPairs`
 
         Examples
         --------
@@ -1061,7 +1061,7 @@ class Edb(Database):
 
         Returns
         -------
-        Instance of :class: `legacy.edb_core.layout.EdbLayout`
+        Instance of :class:`pyedb.dotnet.edb_core.layout.EdbLayout`
 
         Examples
         --------
@@ -1078,7 +1078,7 @@ class Edb(Database):
 
         Returns
         -------
-        Instance of :class: `legacy.edb_core.layout.EdbLayout`
+        Instance of :class: `pyedb.dotnet.edb_core.layout.EdbLayout`
 
         Examples
         --------
@@ -1096,7 +1096,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.dotnet.layout.Layout`
+        :class:`pyedb.dotnetedb_core.dotnet.layout.Layout`
         """
         return LayoutDotNet(self)
 
@@ -1174,7 +1174,7 @@ class Edb(Database):
 
         Returns
         -------
-        dic[str, :class:`legacy.edb_core.edb_data.definitions.EDBPadstackInstance`]
+        dic[str, :class:`pyedb.dotnetedb_core.edb_data.definitions.EDBPadstackInstance`]
             Dictionary of EDBPadstackInstance Components.
 
 
@@ -3526,7 +3526,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.edb_data.simulation_configuration.SimulationConfiguration`
+        :class:`pyedb.dotnetedb_core.edb_data.simulation_configuration.SimulationConfiguration`
         """
         return SimulationConfiguration(filename, self)
 
@@ -3536,9 +3536,9 @@ class Edb(Database):
 
         Returns
         -------
-        Dict[str, :class:`legacy.edb_core.edb_data.hfss_simulation_setup_data.HfssSimulationSetup`] or
-        Dict[str, :class:`legacy.edb_core.edb_data.siwave_simulation_setup_data.SiwaveDCSimulationSetup`] or
-        Dict[str, :class:`legacy.edb_core.edb_data.siwave_simulation_setup_data.SiwaveSYZSimulationSetup`]
+        Dict[str, :class:`pyedb.dotnetedb_core.edb_data.hfss_simulation_setup_data.HfssSimulationSetup`] or
+        Dict[str, :class:`pyedb.dotnetedb_core.edb_data.siwave_simulation_setup_data.SiwaveDCSimulationSetup`] or
+        Dict[str, :class:`pyedb.dotnetedb_core.edb_data.siwave_simulation_setup_data.SiwaveSYZSimulationSetup`]
 
         """
         setups = {}
@@ -3557,7 +3557,7 @@ class Edb(Database):
 
         Returns
         -------
-        Dict[str, :class:`legacy.edb_core.edb_data.hfss_simulation_setup_data.HfssSimulationSetup`]
+        Dict[str, :class:`pyedb.dotnetedb_core.edb_data.hfss_simulation_setup_data.HfssSimulationSetup`]
 
         """
         return {name: i for name, i in self.setups.items() if i.setup_type == "kHFSS"}
@@ -3568,7 +3568,7 @@ class Edb(Database):
 
         Returns
         -------
-        Dict[str, :class:`legacy.edb_core.edb_data.siwave_simulation_setup_data.SiwaveDCSimulationSetup`]
+        Dict[str, :class:`pyedb.dotnetedb_core.edb_data.siwave_simulation_setup_data.SiwaveDCSimulationSetup`]
         """
         return {name: i for name, i in self.setups.items() if isinstance(i, SiwaveDCSimulationSetup)}
 
@@ -3578,7 +3578,7 @@ class Edb(Database):
 
         Returns
         -------
-        Dict[str, :class:`legacy.edb_core.edb_data.siwave_simulation_setup_data.SiwaveSYZSimulationSetup`]
+        Dict[str, :class:`pyedb.dotnetedb_core.edb_data.siwave_simulation_setup_data.SiwaveSYZSimulationSetup`]
         """
         return {name: i for name, i in self.setups.items() if isinstance(i, SiwaveSYZSimulationSetup)}
 
@@ -3592,7 +3592,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.edb_data.hfss_simulation_setup_data.HfssSimulationSetup`
+        :class:`pyedb.dotnetedb_core.edb_data.hfss_simulation_setup_data.HfssSimulationSetup`
 
         Examples
         --------
@@ -3648,7 +3648,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.edb_data.siwave_simulation_setup_data.SiwaveSYZSimulationSetup`
+        :class:`pyedb.dotnetedb_core.edb_data.siwave_simulation_setup_data.SiwaveSYZSimulationSetup`
 
         Examples
         --------
@@ -3983,20 +3983,20 @@ class Edb(Database):
 
         Parameters
         ----------
-        terminal : :class:`legacy.edb_core.edb_data.terminals.EdgeTerminal`,
-            :class:`legacy.edb_core.edb_data.terminals.PadstackInstanceTerminal`,
-            :class:`legacy.edb_core.edb_data.terminals.PointTerminal`,
-            :class:`legacy.edb_core.edb_data.terminals.PinGroupTerminal`,
+        terminal : :class:`pyedb.dotnetedb_core.edb_data.terminals.EdgeTerminal`,
+            :class:`pyedb.dotnetedb_core.edb_data.terminals.PadstackInstanceTerminal`,
+            :class:`pyedb.dotnetedb_core.edb_data.terminals.PointTerminal`,
+            :class:`pyedb.dotnetedb_core.edb_data.terminals.PinGroupTerminal`,
             Positive terminal of the port.
         ref_terminal : class:`legacy.edb_core.edb_data.terminals.EdgeTerminal`,
-            :class:`legacy.edb_core.edb_data.terminals.PadstackInstanceTerminal`,
-            :class:`legacy.edb_core.edb_data.terminals.PointTerminal`,
-            :class:`legacy.edb_core.edb_data.terminals.PinGroupTerminal`,
+            :class:`pyedb.dotnetedb_core.edb_data.terminals.PadstackInstanceTerminal`,
+            :class:`pyedb.dotnetedb_core.edb_data.terminals.PointTerminal`,
+            :class:`pyedb.dotnetedb_core.edb_data.terminals.PinGroupTerminal`,
             Negative terminal of the source.
 
         Returns
         -------
-        :class:`legacy.edb_core.edb_data.ports.ExcitationSources`
+        :class:`pyedb.dotnetedb_core.edb_data.ports.ExcitationSources`
         """
         term = Terminal(self, terminal._edb_object)
         term.boundary_type = "kCurrentSource"
@@ -4024,7 +4024,7 @@ class Edb(Database):
 
         Returns
         -------
-        :class:`legacy.edb_core.edb_data.terminals.PointTerminal`
+        :class:`pyedb.dotnetedb_core.edb_data.terminals.PointTerminal`
         """
         from pyedb.dotnet.edb_core.edb_data.terminals import PointTerminal
 

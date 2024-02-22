@@ -707,7 +707,7 @@ class EdbDotNet(object):
             self._logger.error("Failed to initialize Dlls.")
             return
         self._logger.info("Logger is initialized in EDB.")
-        self._logger.info("legacy v%s", __version__)
+        self._logger.info("dotnet v%s", __version__)
         self._logger.info("Python version %s", sys.version)
         if is_linux:  # pragma: no cover
             if env_value(self.edbversion) in os.environ or settings.edb_dll_path:
