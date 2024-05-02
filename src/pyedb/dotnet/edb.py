@@ -35,9 +35,9 @@ import time
 import traceback
 import warnings
 
+from pyedb.configuration.configuration import Configuration
 from pyedb.dotnet.application.Variables import decompose_variable_value
 from pyedb.dotnet.edb_core.components import Components
-from pyedb.dotnet.edb_core.configuration import Configuration
 from pyedb.dotnet.edb_core.dotnet.database import Database
 from pyedb.dotnet.edb_core.dotnet.layout import LayoutDotNet
 from pyedb.dotnet.edb_core.edb_data.control_file import (
@@ -177,15 +177,16 @@ class Edb(Database):
 
     def __init__(
         self,
-        edbpath=None,
-        cellname=None,
-        isreadonly=False,
-        edbversion=None,
-        isaedtowned=False,
+        edbpath: str = None,
+        cellname: str = None,
+        isreadonly: bool = False,
+        edbversion: str = None,
+        isaedtowned: bool = False,
         oproject=None,
-        student_version=False,
-        use_ppe=False,
-        technology_file=None,
+        student_version: bool = False,
+        use_ppe: bool = False,
+        technology_file: str = None,
+        remove_existing_aedt: bool = False,
     ):
         edbversion = get_string_version(edbversion)
         self._clean_variables()
@@ -216,17 +217,8 @@ class Edb(Database):
                 os.path.dirname(edbpath),
                 "pyedb_" + os.path.splitext(os.path.split(edbpath)[-1])[0] + ".log",
             )
-            aedt_file = os.path.splitext(edbpath)[0] + ".aedt"
-            files = [aedt_file, aedt_file + ".lock"]
-            for file in files:
-                if os.path.isfile(file):
-                    try:
-                        shutil.rmtree(file)
-                        self.logger.info(f"Removing {file} to allow loading EDB file.")
-                    except:
-                        self.logger.info(
-                            f"Failed to delete {file} which is located at the same location as the EDB file."
-                        )
+            if not isreadonly:
+                self._check_remove_project_files(edbpath, remove_existing_aedt)
 
         if isaedtowned and (inside_desktop or settings.remote_rpc_session):
             self.open_edb_inside_aedt()
@@ -314,6 +306,22 @@ class Edb(Database):
         if description:  # Add the variable description if a two-item list is passed for variable_value.
             self.__getitem__(variable_name).description = description
 
+    def _check_remove_project_files(self, edbpath: str, remove_existing_aedt: bool) -> None:
+        aedt_file = os.path.splitext(edbpath)[0] + ".aedt"
+        files = [aedt_file, aedt_file + ".lock"]
+        for file in files:
+            if os.path.isfile(file):
+                if not remove_existing_aedt:
+                    self.logger.warning(
+                        f"AEDT project-related file {file} exists and may need to be deleted before opening the EDB in HFSS 3D Layout."  # noqa: E501
+                    )
+                else:
+                    try:
+                        os.unlink(file)
+                        self.logger.info(f"Deleted AEDT project-related file {file}.")
+                    except:
+                        self.logger.info(f"Failed to delete AEDT project-related file {file}.")
+
     def _clean_variables(self):
         """Initialize internal variables and perform garbage collection."""
         self._materials = None
@@ -334,7 +342,7 @@ class Edb(Database):
     @pyedb_function_handler()
     def _init_objects(self):
         self._components = Components(self)
-        self._stackup = Stackup(self)
+        self._stackup = Stackup(self, self.layout.layer_collection)
         self._padstack = EdbPadstacks(self)
         self._siwave = EdbSiwave(self)
         self._hfss = EdbHfss(self)
@@ -837,7 +845,7 @@ class Edb(Database):
         >>> edbapp.stackup.add_layer("Diel", "GND", layer_type="dielectric", thickness="0.1mm", material="FR4_epoxy")
         """
         if not self._stackup2 and self.active_db:
-            self._stackup2 = Stackup(self)
+            self._stackup2 = Stackup(self, self.layout.layer_collection)
         return self._stackup2
 
     @property
@@ -851,12 +859,11 @@ class Edb(Database):
         Examples
         --------
         >>> from pyedb.dotnet.edb import Edb
-        >>> edbapp = Edb("myproject.aedb")
-        >>> edbapp.materials["FR4_epoxy"].conductivity = 1
-        >>> edbapp.materials.add_debye_material("My_Debye2", 5, 3, 0.02, 0.05, 1e5, 1e9)
-        >>> edbapp.materials.add_djordjevicsarkar_material("MyDjord2", 3.3, 0.02, 3.3)
+        >>> edbapp = Edb()
+        >>> edbapp.materials.add_material("air", permittivity=1.0)
+        >>> edbapp.materials.add_debye_material("debye_mat", 5, 3, 0.02, 0.05, 1e5, 1e9)
+        >>> edbapp.materials.add_djordjevicsarkar_material("djord_mat", 3.3, 0.02, 3.3)
         """
-
         if not self._materials and self.active_db:
             self._materials = Materials(self)
         return self._materials
@@ -3643,8 +3650,12 @@ class Edb(Database):
         >>> setup1.hfss_port_settings.max_delta_z0 = 0.5
         """
         if name in self.setups:
+            self.logger.info("setup already exists")
             return False
+        elif not name:
+            name = generate_unique_name("setup")
         setup = HfssSimulationSetup(self).create(name)
+        setup.set_solution_single_frequency("1GΗz")
         return setup
 
     def create_raptorx_setup(self, name=None):
@@ -4171,8 +4182,8 @@ class Edb(Database):
                     loss_tg_variable = "$loss_tangent_{}".format(mat_name)
                     loss_tg_variable = self._clean_string_for_variable_name(loss_tg_variable)
                     if not loss_tg_variable in self.variables:
-                        self.add_design_variable(loss_tg_variable, material.loss_tangent)
-                    material.loss_tangent = loss_tg_variable
+                        self.add_design_variable(loss_tg_variable, material.dielectric_loss_tangent)
+                    material.dielectric_loss_tangent = loss_tg_variable
                     parameters.append(loss_tg_variable)
                 else:
                     sigma_variable = "$sigma_{}".format(mat_name)

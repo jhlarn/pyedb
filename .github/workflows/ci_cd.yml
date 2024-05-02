@@ -26,6 +26,17 @@ concurrency:
 
 jobs:
 
+  check_title:
+    if: github.event_name == 'pull_request'
+    name: Check the title of the pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check commit name
+        uses: ansys/actions/commit-style@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          use-upper-case: true
+
   doc-style:
     name: Documentation style check
     runs-on: ubuntu-latest
@@ -44,7 +55,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         should-release:
           - ${{ github.event_name == 'push' && contains(github.ref, 'refs/tags') }}
     steps:
@@ -70,11 +81,11 @@ jobs:
       - name: "Install Git and clone project"
         uses: actions/checkout@v4
 
+      # Revert to previous verison due too setup-python#819
       - name: "Set up Python"
-        uses: ansys/actions/_setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.MAIN_PYTHON_VERSION }}
-          use-cache: false
 
       - name: Create Python venv
         run: |
@@ -96,7 +107,7 @@ jobs:
         with:
           max_attempts: 3
           retry_on: error
-          timeout_minutes: 10
+          timeout_minutes: 15
           command: |
             . .venv\Scripts\Activate.ps1
             pytest -m "legacy" -n auto --dist loadfile -v --cov
@@ -135,8 +146,9 @@ jobs:
       - name: Install Git and checkout project
         uses: actions/checkout@v4
 
+      # Revert to previous verison due too setup-python#819
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.MAIN_PYTHON_VERSION }}
 
@@ -209,11 +221,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Revert to previous verison due too setup-python#819
       - name: "Set up Python"
-        uses: ansys/actions/_setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.MAIN_PYTHON_VERSION }}
-          use-cache: false
 
       - name: 'Create virtual env'
         run: |

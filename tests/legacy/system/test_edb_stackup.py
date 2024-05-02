@@ -262,11 +262,6 @@ class TestClass:
         import_method = edbapp.stackup.load
         export_method = edbapp.stackup.export
 
-        assert import_method(os.path.join(local_path, "example_models", test_subfolder, "ansys_pcb_stackup.xml"))
-        assert "17_Bottom" in edbapp.stackup.layers.keys()
-        xml_export = os.path.join(self.local_scratch.path, "stackup.xml")
-        assert export_method(xml_export)
-        assert os.path.exists(xml_export)
         assert import_method(os.path.join(local_path, "example_models", test_subfolder, "ansys_pcb_stackup.csv"))
         assert "18_Bottom" in edbapp.stackup.layers.keys()
         assert edbapp.stackup.add_layer("19_Bottom", None, "add_on_top", material="iron")
@@ -282,11 +277,6 @@ class TestClass:
         import_method = edbapp.stackup.import_stackup
         export_method = edbapp.stackup.export_stackup
 
-        assert import_method(os.path.join(local_path, "example_models", test_subfolder, "ansys_pcb_stackup.xml"))
-        assert "17_Bottom" in edbapp.stackup.layers.keys()
-        xml_export = os.path.join(self.local_scratch.path, "stackup.xml")
-        assert export_method(xml_export)
-        assert os.path.exists(xml_export)
         assert import_method(os.path.join(local_path, "example_models", test_subfolder, "ansys_pcb_stackup.csv"))
         assert "18_Bottom" in edbapp.stackup.layers.keys()
         assert edbapp.stackup.add_layer("19_Bottom", None, "add_on_top", material="iron")
@@ -324,12 +314,30 @@ class TestClass:
         assert layer.material == "copper"
         edbapp.close()
 
-    def test_stackup_load(self):
+    def test_stackup_load_json(self):
         """Import stackup from a file."""
         source_path = os.path.join(local_path, "example_models", test_subfolder, "ANSYS-HSD_V1.aedb")
         fpath = os.path.join(local_path, "example_models", test_subfolder, "stackup.json")
         edbapp = Edb(source_path, edbversion=desktop_version)
         edbapp.stackup.load(fpath)
+        edbapp.close()
+
+    def test_stackup_load_xml(self, edb_examples):
+        edbapp = edb_examples.get_si_verse()
+        assert edbapp.stackup.load(os.path.join(local_path, "example_models", test_subfolder, "ansys_pcb_stackup.xml"))
+        assert "Inner1" in list(edbapp.stackup.layers.keys())  # Renamed layer
+        assert "DE1" not in edbapp.stackup.layers.keys()  # Removed layer
+        assert edbapp.stackup.export(os.path.join(self.local_scratch.path, "stackup.xml"))
+
+    def test_stackup_load_layer_renamed(self):
+        """Import stackup from a file."""
+        source_path = os.path.join(local_path, "example_models", test_subfolder, "ANSYS-HSD_V1.aedb")
+        fpath = os.path.join(local_path, "example_models", test_subfolder, "stackup_renamed.json")
+        edbapp = Edb(source_path, edbversion=desktop_version)
+        edbapp.stackup.load(fpath, rename=True)
+        assert "1_Top_renamed" in edbapp.stackup.layers
+        assert "DE1_renamed" in edbapp.stackup.layers
+        assert "16_Bottom_renamed" in edbapp.stackup.layers
         edbapp.close()
 
     def test_stackup_place_in_3d_with_flipped_stackup(self):
@@ -966,7 +974,7 @@ class TestClass:
             if not material["dielectric_model_frequency"]:
                 assert (pedb_mat.conductivity - material["conductivity"]) < delta
                 assert (pedb_mat.permittivity - material["permittivity"]) < delta
-                assert (pedb_mat.loss_tangent - material["loss_tangent"]) < delta
+                assert (pedb_mat.dielectric_loss_tangent - material["dielectric_loss_tangent"]) < delta
                 assert (pedb_mat.permeability - material["permeability"]) < delta
                 assert (pedb_mat.magnetic_loss_tangent - material["magnetic_loss_tangent"]) < delta
             assert (pedb_mat.mass_density - material["mass_density"]) < delta
@@ -995,7 +1003,6 @@ class TestClass:
                 assert (pedb_mat.permittivity_at_frequency - material["permittivity_at_frequency"]) < delta
             else:
                 assert pedb_mat.permittivity_at_frequency == material["permittivity_at_frequency"]
-            return 0
 
         import json
 
@@ -1009,10 +1016,9 @@ class TestClass:
         delta = 1e-6
         f = open(json_path)
         json_dict = json.load(f)
-        for k, v in json_dict.items():
-            if k == "materials":
-                for material in v.values():
-                    assert 0 == validate_material(edbapp.materials, material, delta)
+        dict_materials = json_dict["materials"]
+        for material_dict in dict_materials.values():
+            validate_material(edbapp.materials, material_dict, delta)
         for k, v in json_dict.items():
             if k == "layers":
                 for layer_name, layer in v.items():
@@ -1047,3 +1053,18 @@ class TestClass:
         assert edbapp.stackup.import_stackup(json_path)
         assert "SOLDER" in edbapp.stackup.stackup_layers
         edbapp.close()
+
+    def test_19(self, edb_examples):
+        edbapp = edb_examples.get_si_verse()
+        assert edbapp.stackup.add_layer_top(name="add_layer_top")
+        assert list(edbapp.stackup.stackup_layers.values())[0].name == "add_layer_top"
+        assert edbapp.stackup.add_layer_bottom(name="add_layer_bottom")
+        assert list(edbapp.stackup.stackup_layers.values())[-1].name == "add_layer_bottom"
+        assert edbapp.stackup.add_layer_below(name="add_layer_below", base_layer_name="1_Top")
+        base_layer = edbapp.stackup.layers["1_Top"]
+        l_id = edbapp.stackup.layers_by_id.index([base_layer.id, base_layer.name])
+        assert edbapp.stackup.layers_by_id[l_id + 1][1] == "add_layer_below"
+        assert edbapp.stackup.add_layer_above(name="add_layer_above", base_layer_name="1_Top")
+        base_layer = edbapp.stackup.layers["1_Top"]
+        l_id = edbapp.stackup.layers_by_id.index([base_layer.id, base_layer.name])
+        assert edbapp.stackup.layers_by_id[l_id - 1][1] == "add_layer_above"

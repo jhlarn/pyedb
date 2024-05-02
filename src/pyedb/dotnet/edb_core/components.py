@@ -38,6 +38,7 @@ from pyedb.dotnet.edb_core.general import convert_py_list_to_net_list
 from pyedb.dotnet.edb_core.padstack import EdbPadstacks
 from pyedb.generic.general_methods import (
     _retry_ntimes,
+    generate_unique_name,
     get_filename_without_extension,
     pyedb_function_handler,
 )
@@ -878,7 +879,7 @@ class Components(object):
             Type of port to create. ``CoaxPort`` generates solder balls.
             ``CircuitPort`` generates circuit ports on pins belonging to the net list.
         do_pingroup : bool
-            True activate pingroup during port creation (only used with combination of CoaxPort),
+            True activate pingroup during port creation (only used with combination of CircPort),
             False will take the closest reference pin and generate one port per signal pin.
         refnet : string or list of string.
             list of the reference net.
@@ -914,6 +915,12 @@ class Components(object):
         """
         if isinstance(component, str):
             component = self.instances[component].edbcomponent
+        if not solder_balls_height:
+            solder_balls_height = self.components[component.GetName()].solder_ball_height
+        if not solder_balls_size:
+            solder_balls_size = self.components[component.GetName()].solder_ball_diameter[0]
+        if not solder_balls_mid_size:
+            solder_balls_mid_size = self.components[component.GetName()].solder_ball_diameter[1]
         if not isinstance(net_list, list):
             net_list = [net_list]
         for net in net_list:
@@ -1015,17 +1022,10 @@ class Components(object):
                     else:
                         self._logger.info("No pins found on component {} for the net {}".format(component, net))
             else:
-                ref_pin_group = self.create_pingroup_from_pins(ref_pins)
-                if not ref_pin_group:
-                    self._logger.warning("failed to create reference pin group")
-                    return False
-                ref_pin_group_term = self._create_pin_group_terminal(ref_pin_group, isref=True)
                 for net in net_list:
                     pins = [pin for pin in cmp_pins if pin.GetNet().GetName() == net]
                     for pin in pins:
-                        pin_group = self.create_pingroup_from_pins([pin])
-                        pin_group_term = self._create_pin_group_terminal(pin_group, isref=False)
-                        pin_group_term.SetReferenceTerminal(ref_pin_group_term)
+                        self.create_port_on_pins(component, pin, ref_pins)
         return True
 
     @pyedb_function_handler()
@@ -1334,7 +1334,7 @@ class Components(object):
             return True
 
     @pyedb_function_handler()
-    def _create_pin_group_terminal(self, pingroup, isref=False, term_name=None):
+    def _create_pin_group_terminal(self, pingroup, isref=False, term_name=None, term_type="circuit"):
         """Creates an EDB pin group terminal from a given EDB pin group.
 
         Parameters
@@ -1342,10 +1342,13 @@ class Components(object):
         pingroup : Edb pin group.
 
         isref : bool
+        Specify if this terminal a reference terminal.
 
         term_name : Terminal name (Optional). If not provided default name is Component name, Pin name, Net name.
             str.
 
+        term_type: Type of terminal, gap, circuit or auto.
+        str.
         Returns
         -------
         Edb pin group terminal.
@@ -1359,6 +1362,10 @@ class Components(object):
         pingroup_term = self._edb.cell.terminal.PinGroupTerminal.Create(
             self._active_layout, pingroup.GetNet(), term_name, pingroup, isref
         )
+        if term_type == "circuit":
+            pingroup_term.SetIsCircuitPort(True)
+        elif term_type == "auto":
+            pingroup_term.SetIsAutoPort(True)
         return pingroup_term
 
     @pyedb_function_handler()
@@ -1408,7 +1415,7 @@ class Components(object):
 
     @pyedb_function_handler()
     def create_rlc_component(
-        self, pins, component_name="", r_value=1.0, c_value=1e-9, l_value=1e-9, is_parallel=False
+        self, pins, component_name="", r_value=None, c_value=None, l_value=None, is_parallel=False
     ):  # pragma: no cover
         """Create physical Rlc component.
 
@@ -1450,13 +1457,13 @@ class Components(object):
     def create(
         self,
         pins,
-        component_name,
+        component_name=None,
         placement_layer=None,
         component_part_name=None,
         is_rlc=False,
-        r_value=0,
-        c_value=0,
-        l_value=0,
+        r_value=None,
+        c_value=None,
+        l_value=None,
         is_parallel=False,
     ):
         """Create a component from pins.
@@ -1496,6 +1503,8 @@ class Components(object):
         >>> edbapp.components.create(pins, "A1New")
 
         """
+        if not component_name:
+            component_name = generate_unique_name("Comp_")
         if component_part_name:
             compdef = self._getComponentDefinition(component_part_name, pins)
         else:
@@ -1523,21 +1532,21 @@ class Components(object):
         if is_rlc and len(pins) == 2:
             rlc = self._edb.utility.utility.Rlc()
             rlc.IsParallel = is_parallel
-            if r_value:
+            if r_value is None:
+                rlc.REnabled = False
+            else:
                 rlc.REnabled = True
                 rlc.R = self._get_edb_value(r_value)
+            if l_value is None:
+                rlc.LEnabled = False
             else:
-                rlc.REnabled = False
-            if l_value:
                 rlc.LEnabled = True
                 rlc.L = self._get_edb_value(l_value)
+            if c_value is None:
+                rlc.CEnabled = False
             else:
-                rlc.LEnabled = False
-            if c_value:
                 rlc.CEnabled = True
                 rlc.C = self._get_edb_value(c_value)
-            else:
-                rlc.CEnabled = False
             if rlc.REnabled and not rlc.CEnabled and not rlc.CEnabled:
                 new_cmp.SetComponentType(self._edb.definition.ComponentType.Resistor)
             elif rlc.CEnabled and not rlc.REnabled and not rlc.LEnabled:
@@ -2292,7 +2301,7 @@ class Components(object):
             Filter on the net name as an alternative to
             ``pinName``. The default is ``None``.
         pinName : str, optional
-            Filter on the pin name an an alternative to
+            Filter on the pin name an alternative to
             ``netName``. The default is ``None``.
 
         Returns

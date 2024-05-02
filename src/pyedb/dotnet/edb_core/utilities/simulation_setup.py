@@ -98,8 +98,10 @@ class BaseSimulationSetup(object):
             "kDDRwizard": None,
             "kQ3D": None,
             "kNumSetupTypes": None,
-            "kRaptorX": utility.RaptorXSimulationSetup,
         }
+        version = self._pedb.edbversion.split(".")
+        if int(version[0]) == 2024 and int(version[1]) == 2 or int(version[0]) > 2024:
+            setup_type_mapping["kRaptorX"] = utility.RaptorXSimulationSetup
         setup_utility = setup_type_mapping[self._setup_type]
         return setup_utility(edb_setup_info)
 
@@ -115,7 +117,7 @@ class BaseSimulationSetup(object):
         if self._name in self._pedb.setups:
             self._pedb.layout.cell.DeleteSimulationSetup(self._name)
         if not self._pedb.layout.cell.AddSimulationSetup(self._edb_object):
-            self._pedb.logger.error("Updating setup {} failed.".format(self._name))
+            raise Exception("Updating setup {} failed.".format(self._name))
         else:
             return True
 
@@ -126,9 +128,8 @@ class BaseSimulationSetup(object):
 
     @enabled.setter
     def enabled(self, value):
-        # edb_setup_info = self.get_sim_setup_info
-        edb_setup_info.SimulationSettings.Enabled = value
-        self._edb_object = self._set_edb_setup_info(edb_setup_info)
+        self.get_sim_setup_info.SimulationSettings.Enabled = value
+        self._edb_object = self._set_edb_setup_info(self.get_sim_setup_info)
         self._update_setup()
 
     @property
@@ -182,7 +183,7 @@ class BaseSimulationSetup(object):
         if self.setup_type == "kRaptorX":
             edb_setup_info = self._edb_setup_info
         else:
-            edb_setup_info = self.sim_setup_info
+            edb_setup_info = self.get_sim_setup_info
 
         if self._setup_type in ["kSIwave", "kHFSS", "kRaptorX"]:
             for _, v in self._sweep_list.items():
@@ -205,9 +206,7 @@ class BaseSimulationSetup(object):
 
         fsweep = []
         if self.frequency_sweeps:
-            for k, val in self.frequency_sweeps.items():
-                if not k == name:
-                    fsweep.append(val)
+            fsweep = [val for key, val in self.frequency_sweeps.items() if not key == name]
             self.get_sim_setup_info.SweepDataList.Clear()
             for i in fsweep:
                 self.get_sim_setup_info.SweepDataList.Add(i._edb_object)
@@ -730,9 +729,8 @@ class EdbFrequencySweep(object):
                 ["linear scale", "0.1GHz", "10GHz", "0.1GHz"],
             ]
         temp = []
-        if isinstance(frequency_list, list):
-            if not isinstance(frequency_list[0], list):
-                frequency_list = [frequency_list]
+        if isinstance(frequency_list, list) and not isinstance(frequency_list[0], list):
+            frequency_list = [frequency_list]
         for i in frequency_list:
             if i[0] == "linear count":
                 temp.extend(list(self._edb_sweep_data.SetFrequencies(i[1], i[2], i[3])))
