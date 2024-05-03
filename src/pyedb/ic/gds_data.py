@@ -49,6 +49,108 @@ class CellShapes:
         return True
 
 
+class ICBox:
+    def __init__(self, k_box):
+        self._kbox = k_box
+
+    @property
+    def is_box(self):
+        return self._kbox.is_box()
+
+    @property
+    def center(self):
+        return self._kbox.box_center
+
+    @property
+    def pt1(self):
+        return self._kbox.box_p1
+
+    @property
+    def pt2(self):
+        return self._kbox.box_p2
+
+
+class ICPath:
+    def __init__(self, k_path):
+        self._k_path = k_path
+
+    @property
+    def is_path(self):
+        return self._k_path.is_path()
+
+    @property
+    def width(self):
+        return self._k_path.path_width
+
+    @property
+    def begin_extension(self):
+        """Extensions of the path beginning"""
+        return self._k_path.path_bgnext()
+
+    @property
+    def end_extension(self):
+        """Extensions of the path end."""
+        return self._k_path.path_endext()
+
+    @property
+    def length(self):
+        """Return path length."""
+        return self._k_path.path_length()
+
+    @property
+    def points(self):
+        return list(self._k_path.each_point())
+
+    @property
+    def contour(self):
+        return ICPolygon(self._k_path.polygon)
+
+
+class ICPolygon:
+    def __init__(self, k_polygon):
+        self._k_polygon = k_polygon
+
+    @property
+    def is_polygon(self):
+        return self._k_polygon.is_polygon()
+
+    @property
+    def is_simple_polygon(self):
+        return self._k_polygon.is_simple_polygon()
+
+    @property
+    def points_hull(self):
+        """Deliver the points of the outer (hull) contour"""
+        return list(self._k_polygon.each_point_hull())
+
+    @property
+    def points_hole(self):
+        """Deliver the points of a specific hole contour."""
+        if self.is_simple_polygon:
+            return None
+        if self._k_polygon.each_point_hole():
+            return list(self._k_polygon.each_point_hole())
+        else:
+            return None
+
+    @property
+    def edges(self):
+        return list(self._k_polygon.each_edge())
+
+    @property
+    def num_holes(self):
+        """Deliver the number of holes. A simple polygon does not have holes, in this case always return 0."""
+        if self._k_polygon.holes():
+            return list(self._k_polygon.holes())
+        else:
+            return 0
+
+    @property
+    def area(self):
+        """Returns the polygon area."""
+        return self._k_polygon.area()
+
+
 class ICLayoutData:
     def __init__(self, klayout, layers, cells):
         self._klayout = klayout
@@ -78,10 +180,10 @@ class CellData:
     def __init__(self, klayout, name):
         self._klayout = klayout
         self._name = name
-        self._polygons = {}
+        self._k_polygons = {}
         self._labels = {}
-        self._boxes = {}
-        self._paths = {}
+        self._k_boxes = {}
+        self._k_paths = {}
         self._pins = {}
         self._nets = []
 
@@ -100,7 +202,7 @@ class CellData:
 
     @property
     def polygons(self):
-        return self._polygons
+        return {layer_name: [ICPolygon(k) for k in k_poly] for layer_name, k_poly in self._k_polygons.items()}
 
     @property
     def labels(self):
@@ -108,11 +210,11 @@ class CellData:
 
     @property
     def boxes(self):
-        return self._boxes
+        return {layer_name: [ICBox(k) for k in k_box] for layer_name, k_box in self._k_boxes.items()}
 
     @property
     def paths(self):
-        return self._paths
+        return {layer_name: [ICPath(k) for k in k_path] for layer_name, k_path in self._k_paths.items()}
 
     @property
     def pins(self):

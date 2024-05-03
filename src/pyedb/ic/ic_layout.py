@@ -31,7 +31,7 @@ class ICLayout:
     def __init__(self, gds_file, layermap=None):
         self.editable = True
         self._klayout = pya.Layout(self.editable)
-        # self._cells = {}
+        self.units = self._klayout.dbu
         self._layermap = layermap
         self.db = ICLayoutData(klayout=self._klayout, layers=[], cells={})
         if layermap:
@@ -87,11 +87,11 @@ class ICLayout:
             for layer in self.db.layers:
                 if cell in layer.shapes:
                     cell_info = layer.shapes[cell]
-                    cell_data.polygons[layer.name] = cell_info.polygons
+                    cell_data._k_polygons[layer.name] = [k_poly for k_poly in cell_info.polygons]
                     cell_data.nets.append(cell_info.nets)
                     cell_data.pins[layer.name] = cell_info.pins
-                    cell_data.boxes[layer.name] = cell_info.boxes
-                    cell_data.paths[layer.name] = cell_info.paths
+                    cell_data._k_boxes[layer.name] = [k_box for k_box in cell_info.boxes]
+                    cell_data._k_paths[layer.name] = [k_path for k_path in cell_info.paths]
                     cell_data.labels[layer.name] = cell_info.labels
             self.db.cells[cell] = cell_data
 
