@@ -20,10 +20,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+import tempfile
+
 from pyedb.configuration.cfg_common import CfgBase
+from pyedb.generic.general_methods import ET, generate_unique_name
+from pyedb.misc.aedtlib_personalib_install import write_pretty_xml
 
 
 class CfgMaterial(CfgBase):
+    KEY_MAPPING = {
+        "permittivity": "Permittivity",
+        "conductivity": "Conductivity",
+        "dielectric_loss_tangent": "DielectricLossTangent",
+        "magnetic_loss_tangent": "MagneticLossTangent",
+        "permeability": "Permeability",
+        "poisson_ratio": "PoissonRatio",
+        "specific_heat": "SpecificHeat",
+        "thermal_conductivity": "ThermalConductivity",
+    }
+
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", None)
         self.permittivity = kwargs.get("permittivity", None)
@@ -38,6 +54,14 @@ class CfgMaterial(CfgBase):
 
 
 class CfgLayer(CfgBase):
+    KEY_MAPPING = {
+        "name": "Name",
+        "type": "Type",
+        "material": "Material",
+        "fill_material": "FillMaterial",
+        "thickness": "Thickness"
+    }
+
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", None)
         self.type = kwargs.get("type", None)
@@ -55,18 +79,41 @@ class CfgStackup:
 
     def apply(self):
         """Apply configuration settings to the current design"""
+        root = ET.Element("{http://www.ansys.com/control}Control", attrib={"schemaVersion": "1.0"})
+
+        el_stackup = ET.SubElement(root, "Stackup", {"schemaVersion": "1.0"})
+
         if len(self.materials):
             self.__apply_materials()
 
-        input_signal_layers = [i for i in self.layers if i.type.lower() == "signal"]
-
         if len(self.layers):
-            if len(self._pedb.stackup.signal_layers) == 0:
-                self.__create_stackup()
-            elif not len(input_signal_layers) == len(self._pedb.stackup.signal_layers):
-                raise Exception(f"Input signal layer count do not match.")
-            else:
-                self.__apply_layers()
+            if len(self.materials):
+                el_materials = ET.SubElement(el_stackup, "Materials")
+                for mat in self.materials:
+                    material = ET.SubElement(el_materials, "Material")
+                    material.set("Name", mat.name)
+                    for k, k_xml in mat.KEY_MAPPING.items():
+                        p_val = getattr(mat, k, None)
+                        if p_val:
+                            mat_prop = ET.SubElement(material, k_xml)
+                            value = ET.SubElement(mat_prop, "Double")
+                            value.text = str(p_val)
+            el_layers = ET.SubElement(el_stackup, "Layers", {"LengthUnit": "meter"})
+            for lyr in self.layers:
+                layer = ET.SubElement(el_layers, "Layer")
+                props = {}
+                for k, k_xml in lyr.KEY_MAPPING.items():
+                    lyr_prop = getattr(lyr, k, None)
+                    if lyr_prop is not None:
+                        props[k_xml] = str(lyr_prop)
+
+                if props["Type"] == "signal":
+                    props["Type"] = "conductor"
+                layer.attrib.update(props)
+
+            temp_path = os.path.join(tempfile.gettempdir(), generate_unique_name("temp") + ".xml")
+            write_pretty_xml(root, temp_path)
+            self._pedb.stackup.load(temp_path)
 
     def __create_stackup(self):
         layers = list()

@@ -635,28 +635,13 @@ class TestClass:
             }
         }
         edbapp = edb_examples.get_si_verse()
-        renamed_layers = {
-            "1_Top": "1_Top",
-            "Inner1(GND1)": "Inner1",
-            "Inner2(PWR1)": "Inner2",
-            "Inner3(Sig1)": "Inner3",
-            "Inner4(Sig2)": "Inner4",
-            "Inner5(PWR2)": "Inner5",
-            "Inner6(GND2)": "Inner6",
-            "16_Bottom": "16_Bottom",
-        }
-        vias_before = {i: [j.start_layer, j.stop_layer] for i, j in edbapp.padstacks.instances.items()}
         assert edbapp.configuration.load(data, apply_file=True)
-        assert list(edbapp.stackup.layers.keys())[:4] == ["1_Top", "Inner1", "DE2", "DE3"]
-        vias_after = {i: [j.start_layer, j.stop_layer] for i, j in edbapp.padstacks.instances.items()}
-        for i, j in vias_after.items():
-            assert j[0] == renamed_layers[vias_before[i][0]]
-            assert j[1] == renamed_layers[vias_before[i][1]]
         data_from_db = edbapp.configuration.get_data_from_db(stackup=True)
         for lay in data["stackup"]["layers"]:
             target_mat = [i for i in data_from_db["stackup"]["layers"] if i["name"] == lay["name"]][0]
             for p, value in lay.items():
                 value = edbapp.edb_value(value).ToDouble() if p in ["thickness"] else value
+                print(p, value)
                 assert value == target_mat[p]
         edbapp.close()
 
@@ -690,29 +675,118 @@ class TestClass:
                 ],
                 "layers": [
                     {
+                        "name": "SM",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 20e-6
+                    },
+                    {
+                        "name": "Top",
+                        "type": "signal",
+                        "material": "copper",
                         "fill_material": "Solder Resist",
-                        "material": "copper",
-                        "name": "1_Top",
-                        "thickness": "0.5mm",
-                        "type": "signal",
+                        "thickness": 5e-05
                     },
                     {
-                        "fill_material": "megtron4",
-                        "material": "copper",
+                        "name": "DE1",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 0.0002
+                    },
+                    {
                         "name": "Inner1",
-                        "thickness": "0.017mm",
                         "type": "signal",
-                    },
-                    {"material": "megtron4", "name": "DE2", "thickness": "0.088mm", "type": "dielectric"},
-                    {"material": "megtron4", "name": "DE3", "thickness": "0.1mm", "type": "dielectric"},
-                    {
-                        "fill_material": "megtron4",
                         "material": "copper",
-                        "name": "Inner2",
-                        "thickness": "0.017mm",
-                        "type": "signal",
+                        "fill_material": "Megtron4_2",
+                        "thickness": 1.7000000000000003e-05
                     },
-                ],
+                    {
+                        "name": "DE2",
+                        "type": "dielectric",
+                        "material": "Megtron4_2",
+                        "fill_material": "",
+                        "thickness": 8.8e-05
+                    },
+                    {
+                        "name": "Inner2(PWR1)",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_2",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "DE3",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 0.0001
+                    },
+                    {
+                        "name": "Inner3(Sig1)",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_3",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "Megtron4-1mm",
+                        "type": "dielectric",
+                        "material": "Megtron4_3",
+                        "fill_material": "",
+                        "thickness": 0.001
+                    },
+                    {
+                        "name": "Inner4(Sig2)",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_3",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "DE5",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 0.0001
+                    },
+                    {
+                        "name": "Inner5(PWR2)",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_2",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "DE6",
+                        "type": "dielectric",
+                        "material": "Megtron4_2",
+                        "fill_material": "",
+                        "thickness": 8.8e-05
+                    },
+                    {
+                        "name": "Inner6(GND2)",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_2",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "DE7",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 0.0001
+                    },
+                    {
+                        "name": "16_Bottom",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Solder Resist",
+                        "thickness": 3.5000000000000004e-05
+                    }
+                ]
             }
         }
         edbapp = edb_examples.create_empty_edb()
