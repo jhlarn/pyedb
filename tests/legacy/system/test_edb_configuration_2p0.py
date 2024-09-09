@@ -574,63 +574,122 @@ class TestClass:
             "stackup": {
                 "layers": [
                     {
+                        "name": "SMT",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 20e-6
+                    },
+                    {
+                        "name": "Top",
+                        "type": "signal",
+                        "material": "copper",
+                        "color": [
+                            255,
+                            180,
+                            100
+                        ],
                         "fill_material": "Solder Resist",
-                        "material": "copper",
-                        "name": "1_Top",
-                        "thickness": "0.5mm",
-                        "type": "signal",
+                        "thickness": 5.5000000000000004e-05
                     },
                     {
-                        "fill_material": "Megtron4",
-                        "material": "copper",
-                        "name": "Inner1",
-                        "thickness": "0.017mm",
-                        "type": "signal",
-                    },
-                    {"material": "Megtron4", "name": "DE2", "thickness": "0.088mm", "type": "dielectric"},
-                    {"material": "Megtron4", "name": "DE3", "thickness": "0.1mm", "type": "dielectric"},
-                    {
-                        "fill_material": "Megtron4",
-                        "material": "copper",
-                        "name": "Inner2",
-                        "thickness": "0.017mm",
-                        "type": "signal",
+                        "name": "DE1",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 0.0002
                     },
                     {
-                        "fill_material": "Megtron4",
-                        "material": "copper",
-                        "name": "Inner3",
-                        "thickness": "0.017mm",
+                        "name": "Inner1(GND1)",
                         "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_2",
+                        "thickness": 1.7000000000000003e-05
                     },
                     {
-                        "fill_material": "Megtron4",
-                        "material": "copper",
-                        "name": "Inner4",
-                        "thickness": "0.017mm",
-                        "type": "signal",
+                        "name": "DE2",
+                        "type": "dielectric",
+                        "material": "Megtron4_2",
+                        "fill_material": "",
+                        "thickness": 8.8e-05
                     },
                     {
-                        "fill_material": "Megtron4",
-                        "material": "copper",
-                        "name": "Inner5",
-                        "thickness": "0.017mm",
+                        "name": "Inner2(PWR1)",
                         "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_2",
+                        "thickness": 1.7000000000000003e-05
                     },
                     {
-                        "fill_material": "Megtron4",
-                        "material": "copper",
-                        "name": "Inner6",
-                        "thickness": "0.017mm",
-                        "type": "signal",
+                        "name": "DE3",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 0.0001
                     },
                     {
-                        "fill_material": "Solder Resist",
+                        "name": "Inner3(Sig1)",
+                        "type": "signal",
                         "material": "copper",
+                        "fill_material": "Megtron4_3",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "Megtron4-1mm",
+                        "type": "dielectric",
+                        "material": "Megtron4_3",
+                        "fill_material": "",
+                        "thickness": 0.001
+                    },
+                    {
+                        "name": "Inner4(Sig2)",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_3",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "DE5",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 0.0001
+                    },
+                    {
+                        "name": "Inner5(PWR2)",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_2",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "DE6",
+                        "type": "dielectric",
+                        "material": "Megtron4_2",
+                        "fill_material": "",
+                        "thickness": 8.8e-05
+                    },
+                    {
+                        "name": "Inner6(GND2)",
+                        "type": "signal",
+                        "material": "copper",
+                        "fill_material": "Megtron4_2",
+                        "thickness": 1.7000000000000003e-05
+                    },
+                    {
+                        "name": "DE7",
+                        "type": "dielectric",
+                        "material": "Megtron4",
+                        "fill_material": "",
+                        "thickness": 0.0001
+                    },
+                    {
                         "name": "16_Bottom",
-                        "thickness": "0.035mm",
                         "type": "signal",
-                    },
+                        "material": "copper",
+                        "fill_material": "Solder Resist",
+                        "thickness": 3.5000000000000004e-05
+                    }
                 ]
             }
         }
