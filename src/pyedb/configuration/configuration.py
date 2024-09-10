@@ -23,11 +23,16 @@
 import json
 import os
 from pathlib import Path
-
-import toml
+import sys
 
 from pyedb.configuration.cfg_data import CfgData
 from pyedb.dotnet.edb_core.definition.package_def import PackageDef
+
+current_version = sys.version_info[:2]
+if current_version < (3, 12):
+    import tomli as tomllib
+else:
+    import tomllib
 
 
 class Configuration:
@@ -72,7 +77,7 @@ class Configuration:
                     if config_file.endswith(".json"):
                         data = json.load(f)
                     elif config_file.endswith(".toml"):
-                        data = toml.load(f)
+                        data = tomllib.load(f)
             else:  # pragma: no cover
                 return False
 
