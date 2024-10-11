@@ -238,7 +238,7 @@ class Modeler(object):
         list of :class:`pyedb.dotnet.edb_core.edb_data.primitives_data.Primitive`
             List of polygons.
         """
-        return [i for i in self.primitives if i.primitive_type == "polygon"]
+        return [i for i in self.primitives if hasattr(i, 'primitive_type') and i.primitive_type == "polygon"]
 
     def get_polygons_by_layer(self, layer_name, net_list=None):
         """Retrieve polygons by a layer.
