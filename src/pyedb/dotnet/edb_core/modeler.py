@@ -188,9 +188,10 @@ class Modeler(object):
         for lay in self._pedb.stackup.non_stackup_layers:
             _primitives_by_layer[lay] = []
         for i in self._layout.primitives:
-            lay = i.layer.name
-            if lay in _primitives_by_layer:
-                _primitives_by_layer[lay].append(i)
+            if i.layer is not None:
+                lay = i.layer.name
+                if lay in _primitives_by_layer:
+                    _primitives_by_layer[lay].append(i)
         return _primitives_by_layer
 
     @property
@@ -226,7 +227,7 @@ class Modeler(object):
         list of :class:`pyedb.dotnet.edb_core.edb_data.primitives_data.Primitive`
             List of paths.
         """
-        return [i for i in self.primitives if i.primitive_type == "path"]
+        return [i for i in self.primitives if hasattr(i, 'primitive_type') and i.primitive_type == "path"]
 
     @property
     def polygons(self):
