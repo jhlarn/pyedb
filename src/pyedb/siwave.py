@@ -123,6 +123,10 @@ class Siwave(object):  # pragma no cover
                 _com = "pywin32"
             else:
                 raise Exception("Error. No win32com.client or PythonNET modules are found. They need to be installed.")
+        else:
+            _com = "pythonnet"
+            import System
+
         self._main = sys.modules["__main__"]
         print("Launching Siwave Init")
         if "oSiwave" in dir(self._main) and self._main.oSiwave is not None:
