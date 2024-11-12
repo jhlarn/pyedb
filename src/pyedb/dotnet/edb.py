@@ -348,6 +348,7 @@ class Edb(Database):
 
     def _clean_variables(self):
         """Initialize internal variables and perform garbage collection."""
+        self._grpc = False
         self._materials = None
         self._components = None
         self._core_primitives = None
