@@ -134,6 +134,7 @@ cfg_ports = [
         "reference_designator": "U1",
         "type": "coax",
         "positive_terminal": {"net": "PCIe_Gen4_TX2_CAP_P"},
+        "negative_terminal": {"net": "GND"},
     },
     {
         "name": "port_2",

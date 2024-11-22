@@ -56,6 +56,6 @@ class CfgVariables:
     def apply(self):
         for i in self.variables:
             if i.name.startswith("$"):
-                self._pedb.add_project_variable(i.name, i.value)
+                self._pedb.add_project_variable(i.name, i.value, description=i.description)
             else:
-                self._pedb.add_design_variable(i.name, i.value)
+                self._pedb.add_design_variable(i.name, i.value, description=i.description)
