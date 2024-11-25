@@ -135,14 +135,14 @@ cfg_ports = [
     {
         "name": "port_1",
         "reference_designator": "U1",
-        "type": "coax",
+        "type": "circuit",
         "positive_terminal": {"net": "PCIe_Gen4_TX2_CAP_P"},
         "negative_terminal": {"net": "GND"}
     },
     {
         "name": "port_2",
         "reference_designator": "U1",
-        "type": "coax",
+        "type": "circuit",
         "positive_terminal": {"net": "PCIe_Gen4_TX2_CAP_N"},
         "negative_terminal": {"net": "GND"}
     },
@@ -248,14 +248,15 @@ output_file = edbapp.solve_siwave()
 # +
 from ansys.aedt.core.visualization.advanced.touchstone_parser import TouchstoneData
 
-touchstone_file = output_file[:-4] + '.s2p'
+touchstone_file = output_file[:-4] + '_touchstone.s4p'
 
 ts = TouchstoneData(touchstone_file=touchstone_file)
 # -
 
 os.path.abspath(touchstone_file)
 
-ts.plot([[0, 1]])
+ts.get_mixed_mode_touchstone_data(num_of_diff_ports=2, port_ordering="1324")
+ts.plot([(0, 1)])
 
 edbapp.close()
 
