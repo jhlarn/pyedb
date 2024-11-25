@@ -2,12 +2,15 @@
 
 # ## Import the required packages
 
-import json
+import sys
+
+sys.path.append(r'c:\ansysdev\repos\pyedb\src')
+sys.path.append(r'c:\ansysdev\repos\pyaedt\src')
 
 # +
 import os
 import tempfile
-
+import json
 from ansys.aedt.core import Hfss3dLayout
 from ansys.aedt.core.downloads import download_file
 
@@ -134,13 +137,14 @@ cfg_ports = [
         "reference_designator": "U1",
         "type": "coax",
         "positive_terminal": {"net": "PCIe_Gen4_TX2_CAP_P"},
-        "negative_terminal": {"net": "GND"},
+        "negative_terminal": {"net": "GND"}
     },
     {
         "name": "port_2",
         "reference_designator": "U1",
         "type": "coax",
         "positive_terminal": {"net": "PCIe_Gen4_TX2_CAP_N"},
+        "negative_terminal": {"net": "GND"}
     },
     {
         "name": "port_3",
@@ -232,11 +236,27 @@ with open(file_json, "w") as f:
 edbapp.configuration.load(config_file=file_json)
 edbapp.configuration.run()
 
-edbapp.nets.plot(nets=[])
+edbapp.nets.plot(nets=[], plot_vias=True)
 
 # Save and close EDB.
 
 edbapp.save()
+
+edbapp.siwave.create_exec_file(add_syz=True, export_touchstone=True)
+output_file = edbapp.solve_siwave()
+
+# +
+from ansys.aedt.core.visualization.advanced.touchstone_parser import TouchstoneData
+
+touchstone_file = output_file[:-4] + '.s2p'
+
+ts = TouchstoneData(touchstone_file=touchstone_file)
+# -
+
+os.path.abspath(touchstone_file)
+
+ts.plot([[0, 1]])
+
 edbapp.close()
 
 # The configured EDB file is saved in a temp folder.
@@ -263,12 +283,12 @@ h3d.set_differential_pair(
 
 # Solve.
 
-h3d.analyze(setup="siwave_setup")
+h3d.analyze(setup="siwave_setup", num_cores=8)
 
 # Plot insertion loss.
 
-solutions = h3d.post.get_solution_data(expressions="mag(S(DIFF_CONN,DIFF_BGA))", context="Differential Pairs")
-solutions.plot(formula="db20")
+solutions = h3d.post.get_solution_data(expressions="S(DIFF_CONN,DIFF_BGA)", context="Differential Pairs")
+plotter = solutions.plot(formula="db20")
 
 # Shut Down Electronics Desktop
 
