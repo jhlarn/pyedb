@@ -4568,7 +4568,7 @@ class Edb(Database):
             pec_poly = cloned_edb.modeler.create_polygon(
                 main_shape=port_poly.polygon_data._edb_object, layer_name="port_pec", net_name="GND"
             )
-            pec_poly.scale(1.5)
+            pec_poly.scale(1.1)
 
         for void_info in void_padstacks:
             for inst in void_info[1]:
