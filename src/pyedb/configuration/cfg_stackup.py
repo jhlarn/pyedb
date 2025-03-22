@@ -23,6 +23,25 @@
 from pyedb.configuration.cfg_common import CfgBase
 
 
+class CfgMaterialPropertyThermalModifier:
+    def __init__(self, **kwargs):
+        self.basic_quadratic_c1 = kwargs.get('basic_quadratic_c1', 0)
+        self.basic_quadratic_c2 = kwargs.get('basic_quadratic_c2', 0)
+        self.basic_quadratic_temperature_reference = kwargs.get('basic_quadratic_temperature_reference', 22)
+        self.advanced_quadratic_lower_limit = kwargs.get('advanced_quadratic_lower_limit', -273.15)
+        self.advanced_quadratic_upper_limit = kwargs.get('advanced_quadratic_upper_limit', 1000)
+
+        self.advanced_quadratic_auto_calculate = kwargs.get('advanced_quadratic_auto_calculate', True)
+        self.advanced_quadratic_lower_constant = kwargs.get('advanced_quadratic_lower_constant', 1)
+        self.advanced_quadratic_upper_constant = kwargs.get('advanced_quadratic_upper_constant', 1)
+
+
+class CfgMaterialProperty:
+    def __init__(self, **kwargs):
+        self.name = kwargs['name']
+        self.value =
+
+
 class CfgMaterial(CfgBase):
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", None)
@@ -36,6 +55,7 @@ class CfgMaterial(CfgBase):
         self.specific_heat = kwargs.get("specific_heat", None)
         self.thermal_conductivity = kwargs.get("thermal_conductivity", None)
 
+        self.thermal_modifier = kwargs.get("thermal_modifier", [])
 
 class CfgLayer(CfgBase):
     def __init__(self, **kwargs):
@@ -127,7 +147,22 @@ class CfgStackup:
                 self._pedb.materials.delete_material(materials_in_db[mat_in_cfg.name.lower()])
 
             attrs = mat_in_cfg.get_attributes()
-            mat = self._pedb.materials.add_material(**attrs)
+            mat = self._pedb.materials.add_material(name=mat_in_cfg.name)
+
+            basic = self._pedb._edb.Utility.BasicQuadraticParams(
+                self._pedb.edb_value(mat_in_cfg.basic_quadratic_temperature_reference),
+                self._pedb.edb_value(mat_in_cfg.basic_quadratic_c1),
+                self._pedb.edb_value(mat_in_cfg.basic_quadratic_c2),
+            )
+            advanced = self._pedb._edb.Utility.AdvancedQuadraticParams(
+                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_lower_limit),
+                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_upper_limit),
+                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_auto_calculate),
+                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_lower_constant),
+                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_upper_constant),
+            )
+            thermal_modifier = mat.__edb_definition.MaterialPropertyThermalModifier(basic, advanced)
+            mat.__material_def.SetThermalModifier(thermal_modifier)
 
     def get_materials_from_db(self):
         materials = []
