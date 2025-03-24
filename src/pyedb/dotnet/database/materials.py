@@ -451,6 +451,19 @@ class Materials(object):
         self.__edb_definition = edb.edb_api.definition
         self.__syslib = os.path.join(self.__edb.base_path, "syslib")
 
+        self.material_property_id_mapping = {
+            "conductivity": self.__edb_definition.MaterialPropertyId.Conductivity,
+            "permittivity": self.__edb_definition.MaterialPropertyId.Permittivity,
+            "dielectric_loss_tangent": self.__edb_definition.MaterialPropertyId.DielectricLossTangent,
+            "magnetic_loss_tangent": self.__edb_definition.MaterialPropertyId.MagneticLossTangent,
+            "mass_density": self.__edb_definition.MaterialPropertyId.MassDensity,
+            "permeability": self.__edb_definition.MaterialPropertyId.Permeability,
+            "poisson_ratio": self.__edb_definition.MaterialPropertyId.PoissonsRatio,
+            "specific_heat": self.__edb_definition.MaterialPropertyId.SpecificHeat,
+            "thermal_conductivity": self.__edb_definition.MaterialPropertyId.ThermalConductivity,
+            "thermal_expansion_coefficient": self.__edb_definition.MaterialPropertyId.ThermalExpansionCoefficient,
+        }
+
     def __contains__(self, item):
         if isinstance(item, Material):
             return item.name in self.materials

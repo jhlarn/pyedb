@@ -25,6 +25,7 @@ from pyedb.configuration.cfg_common import CfgBase
 
 class CfgMaterialPropertyThermalModifier:
     def __init__(self, **kwargs):
+        self.name = kwargs["name"]
         self.basic_quadratic_c1 = kwargs.get('basic_quadratic_c1', 0)
         self.basic_quadratic_c2 = kwargs.get('basic_quadratic_c2', 0)
         self.basic_quadratic_temperature_reference = kwargs.get('basic_quadratic_temperature_reference', 22)
@@ -36,28 +37,20 @@ class CfgMaterialPropertyThermalModifier:
         self.advanced_quadratic_upper_constant = kwargs.get('advanced_quadratic_upper_constant', 1)
 
 
-class CfgMaterialProperty:
-    def __init__(self, **kwargs):
-        self.name = kwargs['name']
-        self.value = kwargs["value"]
-        self.thermal_modifier = CfgMaterialPropertyThermalModifier(**kwargs.get("thermal_modifier", {}))
-
-
 class CfgMaterial(CfgBase):
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", None)
-        self.permittivity = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "permittivity", "value": 1}))
-        self.conductivity = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "conductivity", "value": 0}))
-        self.dielectric_loss_tangent = CfgMaterialProperty(
-            **kwargs.get("permittivity", {"name": "dielectric_loss_tangent", "value": 0}))
-        self.magnetic_loss_tangent = CfgMaterialProperty(
-            **kwargs.get("permittivity", {"name": "magnetic_loss_tangent", "value": 0}))
-        self.mass_density = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "mass_density", "value": 0}))
-        self.permeability = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "permeability", "value": 1}))
-        self.poisson_ratio = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "poisson_ratio", "value": 0}))
-        self.specific_heat = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "specific_heat", "value": 0}))
-        self.thermal_conductivity = CfgMaterialProperty(
-            **kwargs.get("permittivity", {"name": "thermal_conductivity", "value": 0}))
+        self.permittivity = kwargs.get("permittivity", None)
+        self.conductivity = kwargs.get("conductivity", None)
+        self.dielectric_loss_tangent = kwargs.get("dielectric_loss_tangent", None)
+        self.magnetic_loss_tangent = kwargs.get("magnetic_loss_tangent", None)
+        self.mass_density = kwargs.get("mass_density", None)
+        self.permeability = kwargs.get("permeability", None)
+        self.poisson_ratio = kwargs.get("poisson_ratio", None)
+        self.specific_heat = kwargs.get("specific_heat", None)
+        self.thermal_conductivity = kwargs.get("thermal_conductivity", None)
+
+        self.thermal_modifier = [CfgMaterialPropertyThermalModifier(**i) for i in kwargs.get("thermal_modifier") if kwargs.get("thermal_modifier", None)]
 
 
 class CfgLayer(CfgBase):
@@ -157,16 +150,11 @@ class CfgStackup:
                 "mass_density": mat_in_cfg.mass_density,
                 "permeability": mat_in_cfg.permeability,
                 "poisson_ratio": mat_in_cfg.poisson_ratio,
-                "specfic_heat": mat_in_cfg.specific_heat,
+                "specific_heat": mat_in_cfg.specific_heat,
                 "thermal_conductivity": mat_in_cfg.thermal_conductivity}
-            prop_values = {i: j.value for i, j in props.items()}
-            mat = self._pedb.materials.add_material(name=mat_in_cfg.name, **prop_values)
+            mat = self._pedb.materials.add_material(name=mat_in_cfg.name, **props)
 
-            for name, pp in props.items():
-                if pp is {}:
-                    continue
-                else:
-                    modifier = pp.thermal_modifier
+            for modifier in mat_in_cfg.thermal_modifier:
 
                 basic = self._pedb._edb.Utility.BasicQuadraticParams(
                     self._pedb.edb_value(modifier.basic_quadratic_temperature_reference),
@@ -180,15 +168,27 @@ class CfgStackup:
                     self._pedb.edb_value(modifier.advanced_quadratic_lower_constant),
                     self._pedb.edb_value(modifier.advanced_quadratic_upper_constant),
                 )
-            thermal_modifier = mat.__edb_definition.MaterialPropertyThermalModifier(basic, advanced)
-            mat.__material_def.SetThermalModifier(, thermal_modifier)
+
+                thermal_modifier = mat.__edb_definition.MaterialPropertyThermalModifier(basic, advanced)
+                mat.__material_def.SetThermalModifier(
+                    self._pedb.materials.material_property_id_mapping[modifier.name],
+                    thermal_modifier
+                )
 
     def get_materials_from_db(self):
         materials = []
         for name, p in self._pedb.materials.materials.items():
-            mat = {}
-            for p_name in CfgMaterial().__dict__:
-                mat[p_name] = getattr(p, p_name)
+            mat = CfgMaterial(
+                name=name,
+                permittivity=p.permitivity,
+                conductivity=p.conductivity,
+                dielectric_loss_tangent=p.dielectric_loss_tangent,
+                magnetic_loss_tangent=p.magnetic_loss_tangent,
+                permeability=p.permeability,
+                poisson_ratio=p.poisson_ratio,
+                specific_heat=p.specific_heat,
+                thermal_conductivity=p.thermal_conductivity,
+            )
             materials.append(mat)
         return materials
 
