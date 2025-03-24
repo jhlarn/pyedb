@@ -39,23 +39,26 @@ class CfgMaterialPropertyThermalModifier:
 class CfgMaterialProperty:
     def __init__(self, **kwargs):
         self.name = kwargs['name']
-        self.value =
+        self.value = kwargs["value"]
+        self.thermal_modifier = CfgMaterialPropertyThermalModifier(**kwargs.get("thermal_modifier", {}))
 
 
 class CfgMaterial(CfgBase):
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", None)
-        self.permittivity = kwargs.get("permittivity", None)
-        self.conductivity = kwargs.get("conductivity", None)
-        self.dielectric_loss_tangent = kwargs.get("dielectric_loss_tangent", None)
-        self.magnetic_loss_tangent = kwargs.get("magnetic_loss_tangent", None)
-        self.mass_density = kwargs.get("mass_density", None)
-        self.permeability = kwargs.get("permeability", None)
-        self.poisson_ratio = kwargs.get("poisson_ratio", None)
-        self.specific_heat = kwargs.get("specific_heat", None)
-        self.thermal_conductivity = kwargs.get("thermal_conductivity", None)
+        self.permittivity = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "permittivity", "value": 1}))
+        self.conductivity = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "conductivity", "value": 0}))
+        self.dielectric_loss_tangent = CfgMaterialProperty(
+            **kwargs.get("permittivity", {"name": "dielectric_loss_tangent", "value": 0}))
+        self.magnetic_loss_tangent = CfgMaterialProperty(
+            **kwargs.get("permittivity", {"name": "magnetic_loss_tangent", "value": 0}))
+        self.mass_density = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "mass_density", "value": 0}))
+        self.permeability = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "permeability", "value": 1}))
+        self.poisson_ratio = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "poisson_ratio", "value": 0}))
+        self.specific_heat = CfgMaterialProperty(**kwargs.get("permittivity", {"name": "specific_heat", "value": 0}))
+        self.thermal_conductivity = CfgMaterialProperty(
+            **kwargs.get("permittivity", {"name": "thermal_conductivity", "value": 0}))
 
-        self.thermal_modifier = kwargs.get("thermal_modifier", [])
 
 class CfgLayer(CfgBase):
     def __init__(self, **kwargs):
@@ -146,23 +149,39 @@ class CfgStackup:
             if mat_in_cfg.name.lower() in materials_in_db:
                 self._pedb.materials.delete_material(materials_in_db[mat_in_cfg.name.lower()])
 
-            attrs = mat_in_cfg.get_attributes()
-            mat = self._pedb.materials.add_material(name=mat_in_cfg.name)
+            props = {
+                "permittivity": mat_in_cfg.permittivity,
+                "conductivity": mat_in_cfg.conductivity,
+                "dielectric_loss_tangent": mat_in_cfg.dielectric_loss_tangent,
+                "magnetic_loss_tangent": mat_in_cfg.magnetic_loss_tangent,
+                "mass_density": mat_in_cfg.mass_density,
+                "permeability": mat_in_cfg.permeability,
+                "poisson_ratio": mat_in_cfg.poisson_ratio,
+                "specfic_heat": mat_in_cfg.specific_heat,
+                "thermal_conductivity": mat_in_cfg.thermal_conductivity}
+            prop_values = {i: j.value for i, j in props.items()}
+            mat = self._pedb.materials.add_material(name=mat_in_cfg.name, **prop_values)
 
-            basic = self._pedb._edb.Utility.BasicQuadraticParams(
-                self._pedb.edb_value(mat_in_cfg.basic_quadratic_temperature_reference),
-                self._pedb.edb_value(mat_in_cfg.basic_quadratic_c1),
-                self._pedb.edb_value(mat_in_cfg.basic_quadratic_c2),
-            )
-            advanced = self._pedb._edb.Utility.AdvancedQuadraticParams(
-                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_lower_limit),
-                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_upper_limit),
-                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_auto_calculate),
-                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_lower_constant),
-                self._pedb.edb_value(mat_in_cfg.advanced_quadratic_upper_constant),
-            )
+            for name, pp in props.items():
+                if pp is {}:
+                    continue
+                else:
+                    modifier = pp.thermal_modifier
+
+                basic = self._pedb._edb.Utility.BasicQuadraticParams(
+                    self._pedb.edb_value(modifier.basic_quadratic_temperature_reference),
+                    self._pedb.edb_value(modifier.basic_quadratic_c1),
+                    self._pedb.edb_value(modifier.basic_quadratic_c2),
+                )
+                advanced = self._pedb._edb.Utility.AdvancedQuadraticParams(
+                    self._pedb.edb_value(modifier.advanced_quadratic_lower_limit),
+                    self._pedb.edb_value(modifier.advanced_quadratic_upper_limit),
+                    self._pedb.edb_value(modifier.advanced_quadratic_auto_calculate),
+                    self._pedb.edb_value(modifier.advanced_quadratic_lower_constant),
+                    self._pedb.edb_value(modifier.advanced_quadratic_upper_constant),
+                )
             thermal_modifier = mat.__edb_definition.MaterialPropertyThermalModifier(basic, advanced)
-            mat.__material_def.SetThermalModifier(thermal_modifier)
+            mat.__material_def.SetThermalModifier(, thermal_modifier)
 
     def get_materials_from_db(self):
         materials = []
