@@ -116,6 +116,24 @@ class Material(object):
         self.__material_def = material_def
         self.__dc_model = material_def.GetDielectricMaterialModel()
 
+        self._edb = edb
+        self._edb_object = material_def
+        self._edb_definition = edb.edb_api.definition
+
+        definition = self.__edb_definition
+        self.material_property_id_mapping = {
+            "conductivity": definition.MaterialPropertyId.Conductivity,
+            "permittivity": definition.MaterialPropertyId.Permittivity,
+            "dielectric_loss_tangent": definition.MaterialPropertyId.DielectricLossTangent,
+            "magnetic_loss_tangent": definition.MaterialPropertyId.MagneticLossTangent,
+            "mass_density": definition.MaterialPropertyId.MassDensity,
+            "permeability": definition.MaterialPropertyId.Permeability,
+            "poisson_ratio": definition.MaterialPropertyId.PoissonsRatio,
+            "specific_heat": definition.MaterialPropertyId.SpecificHeat,
+            "thermal_conductivity": definition.MaterialPropertyId.ThermalConductivity,
+            "thermal_expansion_coefficient": definition.MaterialPropertyId.ThermalExpansionCoefficient,
+        }
+
     @property
     def name(self):
         """Material name."""
@@ -442,6 +460,53 @@ class Material(object):
     #     # Trigger get value on the property
     #     _ = getattr(self, name)
 
+    def set_thermal_modifier(self,
+                             property_name,
+                             basic_quadratic_temperature_reference=22,
+                             basic_quadratic_c1=0,
+                             basic_quadratic_c2=0,
+                             advanced_quadratic_lower_limit=-273.15,
+                             advanced_quadratic_upper_limit=1000,
+                             advanced_quadratic_auto_calculate=True,
+                             advanced_quadratic_lower_constant=1,
+                             advanced_quadratic_upper_constant=1,
+                             ):
+        basic = self._edb._edb.Utility.BasicQuadraticParams(
+            self._edb.edb_value(basic_quadratic_temperature_reference),
+            self._edb.edb_value(basic_quadratic_c1),
+            self._edb.edb_value(basic_quadratic_c2),
+        )
+        advanced = self._edb._edb.Utility.AdvancedQuadraticParams(
+            self._edb.edb_value(advanced_quadratic_lower_limit),
+            self._edb.edb_value(advanced_quadratic_upper_limit),
+            advanced_quadratic_auto_calculate,
+            self._edb.edb_value(advanced_quadratic_lower_constant),
+            self._edb.edb_value(advanced_quadratic_upper_constant),
+        )
+
+        thermal_modifier = self._edb_definition.MaterialPropertyThermalModifier(basic, advanced)
+        return self._edb_object.SetThermalModifier(
+            self.material_property_id_mapping[property_name],
+            thermal_modifier
+        )
+
+    def get_thermal_modifier(self, property_name):
+        edb_obj = self.__material_def.GetThermalModifier(self.material_property_id_mapping[property_name])
+        flag, basic, advanced = edb_obj.GetQuadraticModelParams()
+        if flag:
+            return {
+                "basic_quadratic_temperature_reference":basic.TempRefVal.ToDouble(),
+                "basic_quadratic_c1": basic.C1Val.ToDouble(),
+                "basic_quadratic_c2": basic.C2Val.ToDouble(),
+                "advanced_quadratic_lower_limit": advanced.TempLowerLimitVal.ToDouble(),
+                "advanced_quadratic_upper_limit": advanced.TempUpperLimitVal.ToDouble(),
+                "advanced_quadratic_auto_calculate": advanced.AutoCalcConstantThermalModifierVals,
+                "advanced_quadratic_lower_constant": advanced.LowerConstantThermalModifierVal.ToDouble(),
+                "advanced_quadratic_upper_constant": advanced.UpperConstantThermalModifierVal.ToDouble()
+            }
+        else:
+            return dict()
+
 
 class Materials(object):
     """Manages EDB methods for material management accessible from `Edb.materials` property."""
@@ -450,19 +515,6 @@ class Materials(object):
         self.__edb = edb
         self.__edb_definition = edb.edb_api.definition
         self.__syslib = os.path.join(self.__edb.base_path, "syslib")
-
-        self.material_property_id_mapping = {
-            "conductivity": self.__edb_definition.MaterialPropertyId.Conductivity,
-            "permittivity": self.__edb_definition.MaterialPropertyId.Permittivity,
-            "dielectric_loss_tangent": self.__edb_definition.MaterialPropertyId.DielectricLossTangent,
-            "magnetic_loss_tangent": self.__edb_definition.MaterialPropertyId.MagneticLossTangent,
-            "mass_density": self.__edb_definition.MaterialPropertyId.MassDensity,
-            "permeability": self.__edb_definition.MaterialPropertyId.Permeability,
-            "poisson_ratio": self.__edb_definition.MaterialPropertyId.PoissonsRatio,
-            "specific_heat": self.__edb_definition.MaterialPropertyId.SpecificHeat,
-            "thermal_conductivity": self.__edb_definition.MaterialPropertyId.ThermalConductivity,
-            "thermal_expansion_coefficient": self.__edb_definition.MaterialPropertyId.ThermalExpansionCoefficient,
-        }
 
     def __contains__(self, item):
         if isinstance(item, Material):
