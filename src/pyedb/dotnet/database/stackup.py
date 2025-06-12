@@ -910,6 +910,21 @@ class Stackup(LayerCollection):
         self.refresh_layer_collection()
         return True
 
+    def remove_outer_layers(self):
+        """Remove the first and last layers from the stackup.
+
+        Returns
+        -------
+        bool
+            ``True`` when successful, ``False`` if the operation fails due to an insufficient number of layers.
+        """
+        layer_names = list(self.layers.keys())
+        if len(layer_names) < 2:
+            return False
+        self.remove_layer(layer_names[0])
+        self.remove_layer(layer_names[-1])
+        return True
+
     def export(self, fpath, file_format="xml", include_material_with_layer=False):
         """Export stackup definition to a CSV or JSON file.
 

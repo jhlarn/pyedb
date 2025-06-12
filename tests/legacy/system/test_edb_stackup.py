@@ -1386,3 +1386,10 @@ class TestClass:
         l_id = edbapp.stackup.layers_by_id.index([base_layer.id, base_layer.name])
         assert edbapp.stackup.layers_by_id[l_id - 1][1] == "add_layer_above"
         edbapp.close()
+
+    def test_remove_outer_layers(self, edb_examples):
+        edbapp = edb_examples.get_si_verse()
+        original_layers = list(edbapp.stackup.layers.keys())
+        assert edbapp.stackup.remove_outer_layers()
+        assert list(edbapp.stackup.layers.keys()) == original_layers[1:-1]
+        edbapp.close()
